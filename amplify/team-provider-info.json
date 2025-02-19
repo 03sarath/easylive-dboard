@@ -1,0 +1,20 @@
+{
+  "dev": {
+    "awscloudformation": {
+      "AuthRoleName": "amplify-easylivedashboard-dev-c2966-authRole",
+      "UnauthRoleArn": "arn:aws:iam::923307152276:role/amplify-easylivedashboard-dev-c2966-unauthRole",
+      "AuthRoleArn": "arn:aws:iam::923307152276:role/amplify-easylivedashboard-dev-c2966-authRole",
+      "Region": "ap-south-1",
+      "DeploymentBucketName": "amplify-easylivedashboard-dev-c2966-deployment",
+      "UnauthRoleName": "amplify-easylivedashboard-dev-c2966-unauthRole",
+      "StackName": "amplify-easylivedashboard-dev-c2966",
+      "StackId": "arn:aws:cloudformation:ap-south-1:923307152276:stack/amplify-easylivedashboard-dev-c2966/a8fc3550-ee9a-11ef-b7e0-0622f1811261",
+      "AmplifyAppId": "d2owtrhn2hkxnz"
+    },
+    "categories": {
+      "auth": {
+        "easylivedashboard": {}
+      }
+    }
+  }
+}

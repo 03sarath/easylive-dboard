@@ -1,13 +1,13 @@
+<!-- src/layouts/MainLayout.vue -->
 <template>
-  <div class="home">    
-    <!-- <el-container style="height: 100%; border: 1px solid #eee">
+ <el-container style="height: 100%; border: 1px solid #eee">
   <el-aside width="200px" style="background-color: rgb(238, 241, 246)">
     <el-menu :default-openeds="['1', '3']">
       <el-submenu index="1">
         <template slot="title"><i class="el-icon-message"></i>Navigator One</template>
         <el-menu-item-group>
           <template slot="title">Group 1</template>
-          <el-menu-item index="1-1">Option 1</el-menu-item>
+          <el-menu-item index="1-1" @click="called">Option 1</el-menu-item>
           <el-menu-item index="1-2">Option 2</el-menu-item>
         </el-menu-item-group>
         <el-menu-item-group title="Group 2">
@@ -63,7 +63,7 @@
       </el-dropdown>
       <span>Tom</span>
     </el-header>
-    
+<!--     
     <el-main>
       <el-table :data="tableData">
         <el-table-column prop="date" label="Date" width="140">
@@ -74,16 +74,18 @@
         </el-table-column>
       </el-table>
       <HelloWorld msg="Welcome to Your Vue.js App"/>
-    </el-main>
+    </el-main> -->
     
   </el-container>
-</el-container> -->
-  </div>
-</template>
-
-<script>
-// @ is an alias to /src
-//import HelloWorld from '@/components/HelloWorld.vue'
+</el-container>
+  </template>
+  
+  <script>
+//   import { computed } from 'vue'
+//   import { useRoute } from 'vue-router'
+  
+//   const route = useRoute()
+//   const activeRoute = computed(() => route.path)
 
 export default {
   name: 'HomeView',
@@ -105,19 +107,27 @@ export default {
         console.log(command)
         this.$router.push('/logout')
 
-      }
+      },
+      called() {
+      // Your custom logic here
+      console.log("Option 1 clicked");
+      this.$router.push('/testview')
+      // For example, redirect or perform any action
+      // this.$router.push('/your-route')
+    }
     }
 }
-</script>
 
-<style>
-  .el-header {
-    background-color: #041c3c;
-    color: #333;
-    line-height: 60px;
+  </script>
+  
+  <style scoped>
+  .layout-container {
+    height: 100vh;
   }
   
-  .el-aside {
-    color: #333;
+  .sidebar {
+    background-color: #f5f7fa;
+    border-right: 1px solid #e6e6e6;
   }
-</style>
+  </style>
+  
