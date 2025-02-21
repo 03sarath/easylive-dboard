@@ -1,19 +1,19 @@
-<!-- ScheduleSpecificDates.vue -->
 <template>
     <div class="schedule-specific-dates">
       <div class="mb-4">
         <time-zone-selector
           v-model="timezone"
-          @input="updateSchedule"
+          @input="handleTimezoneChange"
         />
       </div>
   
       <div class="date-time-pairs">
         <div 
-          v-for="(dateTime, index) in scheduleDates" 
-          :key="index"
-          class="date-time-pair"
+        v-for="(dateTime, index) in scheduleDates" 
+        :key="'datetime-' + index"
+        class="date-time-pair mb-4"
         >
+
           <div class="columns is-vcentered">
             <div class="column is-5">
               <b-field label="Date">
@@ -21,7 +21,7 @@
                   v-model="dateTime.dateObj"
                   :min-date="new Date()"
                   placeholder="Select date"
-                  @input="updateSchedule"
+                  @change="handleDateChange($event, index)"
                   icon="calendar-today"
                   trap-focus
                   :mobile-native="false"
@@ -35,7 +35,7 @@
                   v-model="dateTime.timeObj"
                   placeholder="Select time"
                   hour-format="24"
-                  @input="updateSchedule"
+                  @change="handleTimeChange($event, index)"
                   icon="clock-outline"
                   trap-focus
                   :mobile-native="false"
@@ -45,8 +45,9 @@
             </div>
             <div class="column is-2 has-text-centered">
               <button 
-                class="button is-danger is-small delete-btn" 
+                class="button is-danger is-small" 
                 @click="removeDateTime(index)"
+                :disabled="scheduleDates.length === 1"
               >
                 <span class="icon">
                   <i class="mdi mdi-delete"></i>
@@ -59,22 +60,16 @@
   
       <div class="field mt-4">
         <button 
-          class="button is-primary is-small add-btn" 
-          @click="addDateTime"
+            class="button is-primary is-small" 
+            @click.prevent="addDateTime"
         >
-          <span class="icon">
-            <i class="mdi mdi-plus"></i>
-          </span>
-          <span>Add Date & Time</span>
+            <span class="icon">
+                <i class="mdi mdi-plus"></i>
+            </span>
+            <span>Add Date & Time</span>
         </button>
-      </div>
-  
-      <!-- No dates message -->
-      <div v-if="scheduleDates.length === 0" class="no-dates-message">
-        <p class="has-text-grey has-text-centered">
-          No dates added. Click "Add Date & Time" to start.
-        </p>
-      </div>
+
+        </div>
     </div>
   </template>
   
@@ -92,27 +87,71 @@
     props: {
       value: {
         type: Object,
-        required: true
+        required: true,
+        default: () => ({
+          schedule: {
+            dates: []
+          },
+          timezone: 'UTC',
+          type: 'specific'
+        })
       }
     },
   
     data() {
-      return {
-        timezone: this.value.timezone || 'UTC',
-        scheduleDates: []
-      }
-    },
+        return {
+            timezone: 'UTC',
+            scheduleDates: [{
+            dateObj: null,
+            timeObj: null
+            }]
+        }
+        },
+  
+        created() {
+        if (!this.scheduleDates.length) {
+            this.scheduleDates = [{
+            dateObj: null,
+            timeObj: null
+            }];
+        }
+        this.initializeSchedule();
+        },
+
   
     methods: {
-      addDateTime() {
-        this.scheduleDates.push({
-          dateObj: null,
-          timeObj: null
-        })
+      handleDateChange(value, index) {
+        console.log('Date changed:', value, 'at index:', index)
+        this.scheduleDates[index].dateObj = value
+        this.updateSchedule()
       },
   
+      handleTimeChange(value, index) {
+        console.log('Time changed:', value, 'at index:', index)
+        this.scheduleDates[index].timeObj = value
+        this.updateSchedule()
+      },
+  
+      handleTimezoneChange(value) {
+        console.log('Timezone changed:', value)
+        this.timezone = value
+        this.updateSchedule()
+      },
+  
+      addDateTime() {
+            console.log('Current scheduleDates:', JSON.stringify(this.scheduleDates));
+            this.scheduleDates.push({
+                dateObj: null,
+                timeObj: null
+            });
+            console.log('Updated scheduleDates:', JSON.stringify(this.scheduleDates));
+            this.updateSchedule();
+        },
       removeDateTime(index) {
-        // Show confirmation dialog
+        if (this.scheduleDates.length === 1) {
+          return
+        }
+  
         this.$buefy.dialog.confirm({
           title: 'Delete Date & Time',
           message: 'Are you sure you want to delete this date and time?',
@@ -122,68 +161,86 @@
           onConfirm: () => {
             this.scheduleDates.splice(index, 1)
             this.updateSchedule()
-          }
-        })
-      },
-  
-      updateSchedule() {
-        const dates = this.scheduleDates
-          .filter(dt => dt.dateObj && dt.timeObj)
-          .map(dt => {
-            const date = moment(dt.dateObj)
-            const time = moment(dt.timeObj)
-            return date
-              .hour(time.hour())
-              .minute(time.minute())
-              .format('YYYY-MM-DD HH:mm')
-          })
-          .sort()
-  
-        this.$emit('input', {
-          timezone: this.timezone,
-          type: 'specific',
-          schedule: {
-            dates
+            console.log('Removed date time at index:', index)
           }
         })
       },
   
       initializeSchedule() {
-        if (this.value.schedule && this.value.schedule.dates) {
-          this.timezone = this.value.timezone || 'UTC'
-          this.scheduleDates = this.value.schedule.dates.map(dateStr => {
-            const datetime = moment(dateStr)
+        console.log('Initializing schedule with value:', this.value)
+        
+        this.timezone = this.value.timezone || 'UTC'
+        
+        if (this.value.schedule?.dates?.length > 0) {
+          this.scheduleDates = this.value.schedule.dates.map(dateTime => {
+            const dateTimeStr = `${dateTime.date} ${dateTime.time}`
+            const datetime = moment.tz(dateTimeStr, 'YYYY-MM-DD HH:mm', this.timezone)
+            
             return {
               dateObj: datetime.toDate(),
               timeObj: datetime.toDate()
             }
           })
-        }
-  
-        if (!this.scheduleDates.length) {
+          console.log('Schedule initialized with dates:', this.scheduleDates)
+        } else {
           this.scheduleDates = [{ dateObj: null, timeObj: null }]
+          console.log('Schedule initialized with empty date slot')
         }
-      }
-    },
+      },
   
-    created() {
-      this.initializeSchedule()
+      updateSchedule() {
+        console.log('Updating schedule with dates:', this.scheduleDates)
+        
+        const completeDates = this.scheduleDates
+            .filter(dt => dt.dateObj && dt.timeObj) // This filters out incomplete entries
+            .map(dt => {
+            const time = moment(dt.timeObj)
+            const combinedDateTime = moment(dt.dateObj)
+                .hour(time.hour())
+                .minute(time.minute())
+                .tz(this.timezone)
+
+            return {
+                date: combinedDateTime.format('YYYY-MM-DD'),
+                time: combinedDateTime.format('HH:mm')
+            }
+            })
+            .sort((a, b) => {
+            return moment(`${a.date} ${a.time}`).diff(moment(`${b.date} ${b.time}`))
+            })
+
+        console.log('Processed dates:', completeDates)
+
+        const payload = {
+            schedule: {
+            dates: completeDates
+            },
+            timezone: this.timezone,
+            type: 'specific'
+        }
+
+        console.log('Emitting payload:', payload)
+        this.$emit('input', payload)
+        }
+
     },
-  
     watch: {
-      value: {
-        handler() {
-          this.initializeSchedule()
-        },
-        deep: true
-      }
-    }
+            scheduleDates: {
+                handler() {
+                    console.log('Watch triggered for scheduleDates:', JSON.stringify(this.scheduleDates));
+                    this.updateSchedule();
+                },
+                deep: true
+            }
+        }
+
+
   }
   </script>
   
   <style scoped>
   .schedule-specific-dates {
-    padding: 1rem;
+    margin-bottom: 1.5rem;
   }
   
   .date-time-pair {
@@ -191,113 +248,10 @@
     border: 1px solid #e9ecef;
     border-radius: 8px;
     padding: 1.25rem;
-    margin-bottom: 1rem;
-    transition: all 0.3s ease;
   }
   
   .date-time-pair:hover {
     box-shadow: 0 2px 8px rgba(10, 10, 10, 0.1);
-    transform: translateY(-1px);
-  }
-  
-  .delete-btn {
-    width: 32px;
-    height: 32px;
-    border-radius: 50%;
-    padding: 0;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    margin-top: 1.5rem;
-    transition: all 0.3s ease;
-  }
-  
-  .delete-btn:hover {
-    transform: scale(1.1);
-  }
-  
-  .delete-btn .icon {
-    margin: 0;
-    font-size: 1.1rem;
-  }
-  
-  .add-btn {
-    padding: 0 1rem;
-    height: 2.25rem;
-    transition: all 0.3s ease;
-  }
-  
-  .add-btn:hover {
-    transform: translateY(-1px);
-  }
-  
-  .add-btn .icon {
-    margin-right: 0.25rem;
-  }
-  
-  /* Date and Time picker styling */
-  ::v-deep .datepicker, ::v-deep .timepicker {
-    width: 100%;
-  }
-  
-  ::v-deep .input {
-    height: 2.25rem;
-    font-size: 0.875rem;
-  }
-  
-  ::v-deep .field:not(:last-child) {
-    margin-bottom: 0.75rem;
-  }
-  
-  /* Label styling */
-  ::v-deep .label {
-    font-size: 0.875rem;
-    font-weight: 600;
-    color: #363636;
-    margin-bottom: 0.25rem;
-  }
-  
-  /* No dates message */
-  .no-dates-message {
-    padding: 2rem;
-    background: #f8f9fa;
-    border-radius: 8px;
-    margin-top: 1rem;
-  }
-  
-  /* Mobile Responsiveness */
-  @media screen and (max-width: 768px) {
-    .date-time-pair {
-      padding: 1rem;
-    }
-  
-    .columns {
-      margin: 0;
-    }
-  
-    .column {
-      padding: 0.5rem;
-    }
-  
-    .delete-btn {
-      margin-top: 0.5rem;
-    }
-  }
-  
-  /* Animation for adding/removing dates */
-  .date-time-pair {
-    animation: fadeIn 0.3s ease-in-out;
-  }
-  
-  @keyframes fadeIn {
-    from {
-      opacity: 0;
-      transform: translateY(10px);
-    }
-    to {
-      opacity: 1;
-      transform: translateY(0);
-    }
   }
   </style>
   
