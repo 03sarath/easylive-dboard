@@ -1,5 +1,5 @@
 <template>
-  <section>
+  <section class="events-container">
     <b-table
       :data="displayedData"
       :paginated="true"
@@ -7,7 +7,7 @@
       :current-page.sync="currentPage"
       :pagination-position="'bottom'"
       :loading="isLoading"
-      detailed
+      
       :selected.sync="selected"
       selected-row-class="is-selected"
       focusable
@@ -25,20 +25,21 @@
         {{ props.row.event_id }}
       </b-table-column>
 
-      <b-table-column field="contact_name" label="Contact Name" v-slot="props">
-        {{ props.row.contact_name }}
-      </b-table-column>
-
-      <b-table-column field="contact_email" label="Email" v-slot="props">
-        {{ props.row.contact_email }}
-      </b-table-column>
-
       <b-table-column field="webinar_duration" label="Duration" centered v-slot="props">
-        {{ props.row.webinar_duration }}
+        {{ formatDuration(props.row.webinar_duration) }}
       </b-table-column>
 
-      <b-table-column field="time_zone" label="Time Zone" centered v-slot="props">
-        {{ props.row.time_zone }}
+      <b-table-column field="schedule.type" label="Schedule Type" centered v-slot="props">
+        {{ formatScheduleType(props.row.schedule?.type) }}
+      </b-table-column>
+
+      <b-table-column field="event_details" label="Event Details" centered v-slot="props">
+        <b-button 
+          size="is-small"
+          type="is-info"
+          @click.stop="viewDetails(props.row)">
+          View Details
+        </b-button>
       </b-table-column>
 
       <template #empty>
@@ -56,17 +57,19 @@
           <template #previous>
             <b-button 
               :disabled="currentPage === 1"
-              @click="previousPage">
+              @click="previousPage"
+              class="pagination-button">
               <b-icon icon="chevron-left"></b-icon>
-              Previous
+              <span>Previous</span>
             </b-button>
           </template>
 
           <template #next>
             <b-button 
               :disabled="!hasMorePages"
-              @click="nextPage">
-              Next
+              @click="nextPage"
+              class="pagination-button">
+              <span>Next</span>
               <b-icon icon="chevron-right"></b-icon>
             </b-button>
           </template>
@@ -86,35 +89,11 @@
       </template>
     </b-table>
 
-    <!-- Modal -->
-    <!-- <b-modal
-      v-model="isModalActive"
-      has-modal-card
-      full-screen
-      :can-cancel="false">
-      <div class="modal-card" style="width: auto">
-        <header class="modal-card-head">
-          <p class="modal-card-title">Event Details</p>
-        </header>
-        <section class="modal-card-body">
-        
-          <p>Modal Content</p>
-        </section>
-        <footer class="modal-card-foot">
-          <b-button
-            label="Close"
-            @click="closeModal" />
-        </footer>
-      </div>
-    </b-modal> -->
-
-     <!-- Add the edit modal -->
-     <edit-event-modal
+    <edit-event-modal
       v-model="isEditModalActive"
       :active-row="active_row"
       @save="handleSave"
     />
-
   </section>
 </template>
 
@@ -137,7 +116,7 @@ export default {
       isLoadingMore: false,
       customer_id: 'abcdefg-hijklmo-opqrs',
       isModalActive: false,
-      active_row:null,
+      active_row: null,
       isEditModalActive: false,
     }
   },
@@ -157,46 +136,53 @@ export default {
   },
 
   methods: {
-    async handleSave(updatedData) {
-      try {
-        console.log('Saving event:', updatedData)
-        // Implement your save logic here
-        // For example:
-        // await this.updateEvent(updatedData)
-        // Refresh your table data if needed
-      } catch (error) {
-        console.error('Error saving event:', error)
-      }
+    formatDuration(duration) {
+      if (!duration) return '00:00:00';
+      const hours = Math.floor(duration / 3600);
+      const minutes = Math.floor((duration % 3600) / 60);
+      const seconds = duration % 60;
+      return `${String(hours).padStart(2, '0')}:${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`;
     },
-    async getCustomer_id() {
-          try {
-            const data = {
-                    "mode": "getCustomer_id"
-                  }
-      
-            const result = await this.$post_AWS_API(data)
-            console.log(result)
-            
-            // Update the data properties
-            this.customer_id = result.data.body.customer_id
-      
-          } catch (error) {
-            console.error('Error fetching work orders:', error)
-            // You might want to handle the error appropriately here
-            // For example, show a notification to the user
-          }
-        },
+
+    formatScheduleType(type) {
+      if (!type) return 'N/A';
+      return type.charAt(0).toUpperCase() + type.slice(1);
+    },
+
+    viewDetails(row) {
+      this.active_row = row;
+      this.isEditModalActive = true;
+    },
+
     handleSelect(row) {
       console.log(row)
-      this.active_row=row
+      this.active_row = row
       if (row) {
         this.isModalActive = true
         this.isEditModalActive = true
       }
     },
 
-    closeModal() {
-      this.isModalActive = false
+    async handleSave(updatedData) {
+      try {
+        console.log('Saving event:', updatedData)
+        // Implement your save logic here
+      } catch (error) {
+        console.error('Error saving event:', error)
+      }
+    },
+
+    async getCustomer_id() {
+      try {
+        const data = {
+          "mode": "getCustomer_id"
+        }
+        const result = await this.$post_AWS_API(data)
+        console.log(result)
+        this.customer_id = result.data.body.customer_id
+      } catch (error) {
+        console.error('Error fetching customer ID:', error)
+      }
     },
 
     async fetchEventsCreated(token = null) {
@@ -284,36 +270,35 @@ export default {
 </script>
 
 <style scoped>
-.table-container {
-  margin: 20px;
+.events-container {
+  padding: 1rem;
+  max-width: 1200px;
+  margin: 0 auto;
 }
 
-.p-2 {
-  padding: 0.5rem;
+/* Table styles */
+::v-deep .table-wrapper {
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  border-radius: 6px;
+  overflow-x: auto;
 }
 
-/* Make table responsive */
-@media screen and (max-width: 768px) {
-  ::v-deep .table-wrapper {
-    overflow-x: auto;
-  }
+/* Pagination button alignment */
+.pagination-button {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
 }
 
-/* Style pagination buttons */
 ::v-deep .pagination-previous,
 ::v-deep .pagination-next {
-  padding: 0.5em 1em;
-  margin: 0 0.25em;
+  display: inline-flex;
+  align-items: center;
 }
 
-::v-deep .pagination {
-  margin-top: 1rem;
-}
-
-::v-deep .pagination-link.is-current {
-  background-color: #3273dc;
-  border-color: #3273dc;
-  color: #fff;
+::v-deep .pagination-previous .icon,
+::v-deep .pagination-next .icon {
+  margin: 0;
 }
 
 /* Selected row styling */
@@ -325,5 +310,29 @@ export default {
 ::v-deep .table tbody tr.is-selected:hover {
   background-color: #7957d5 !important;
   color: #fff;
+}
+
+/* Table cell alignment and spacing */
+::v-deep .table td {
+  vertical-align: middle;
+}
+
+::v-deep .table th {
+  font-weight: 600;
+}
+
+/* Responsive styles */
+@media screen and (max-width: 768px) {
+  .events-container {
+    padding: 0.5rem;
+  }
+  
+  ::v-deep .table-wrapper {
+    border-radius: 0;
+  }
+}
+
+.p-2 {
+  padding: 0.5rem;
 }
 </style>
