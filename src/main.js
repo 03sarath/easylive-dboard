@@ -3,6 +3,8 @@ import ElementUI from 'element-ui';
 import 'element-ui/lib/theme-chalk/index.css';
 import App from './App.vue'
 import router from './router'
+import Buefy from 'buefy'
+import 'buefy/dist/buefy.css'
 import {
   applyPolyfills,
   defineCustomElements,
@@ -10,6 +12,17 @@ import {
 
 import Amplify from 'aws-amplify';
 import awsconfig from './aws-exports';
+import post_AWS_API from "./api-aws"
+import '@fortawesome/fontawesome-free/css/all.css';
+import '@fortawesome/fontawesome-free/js/all.js';
+
+import '@mdi/font/css/materialdesignicons.css'
+
+
+
+
+// Make it available globally
+Vue.prototype.$post_AWS_API = post_AWS_API 
 
 Amplify.configure(awsconfig);
 
@@ -22,6 +35,10 @@ Vue.config.ignoredElements = [/amplify-\w*/];
 
 Vue.config.productionTip = false
 Vue.use(ElementUI);
+Vue.use(Buefy, {
+  defaultIconPack: 'mdi'
+})
+
 
 
 new Vue({

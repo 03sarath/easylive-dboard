@@ -7,8 +7,101 @@
       <router-link to="/">Home</router-link> |
       <router-link to="/about">About</router-link>
     </nav> -->
+    <!-- <el-menu
+  :default-active="activeIndex2"
+  class="el-menu-demo"
+  mode="horizontal"
+  @select="handleSelect"
+  background-color="#545c64"
+  text-color="#fff"
+  active-text-color="#ffd04b">
+  
+
+  <el-menu-item index="0" style="padding: 0">
+    <img 
+      src="https://psitron.s3.ap-southeast-1.amazonaws.com/Psitron-website/psitron_logo_wit_small.png"
+      alt="Logo"
+      style="height: 50px; padding: 5px; margin-right: 20px;"
+    >
+  </el-menu-item>
+
+  <el-menu-item index="1">Events</el-menu-item>
+  <el-submenu index="2">
+    <template slot="title">Workspace</template>
+    <el-menu-item index="2-1">item one</el-menu-item>
+    <el-menu-item index="2-2">item two</el-menu-item>
+    <el-menu-item index="2-3">item three</el-menu-item>
+    <el-submenu index="2-4">
+      <template slot="title">item four</template>
+      <el-menu-item index="2-4-1">item one</el-menu-item>
+      <el-menu-item index="2-4-2">item two</el-menu-item>
+      <el-menu-item index="2-4-3">item three</el-menu-item>
+    </el-submenu>
+  </el-submenu>
+  <el-menu-item index="3" disabled>Info</el-menu-item>
+  <el-menu-item index="4"><a href="https://www.ele.me" target="_blank">Orders</a></el-menu-item>
+  
+  <el-menu-item index="5" style="float: right">
+    <i class="el-icon-switch-button" style="color: white;"></i>
+  </el-menu-item>
+  <el-menu-item index="6" style="float: right;" >
+    <i class="el-icon-user-solid" style="color: white;"></i>
+  </el-menu-item>
+</el-menu> -->
+
+<b-navbar>
+    <template #brand>
+      <b-navbar-item tag="router-link" :to="{ path: '/' }">
+        <img
+          src="https://d502jbuhuh9wk.cloudfront.net/logos/62dad9eb0cf244c802890de3.png?v=1"
+          alt="Logo"
+        >
+      </b-navbar-item>
+    </template>
+    <template #start>
+      <b-navbar-item tag="router-link" :to="{ path: '/' }" exact-active-class="is-active">
+        Home
+      </b-navbar-item>
+      <b-navbar-item tag="router-link" :to="{ path: '/events' }" exact-active-class="is-active" href="#">
+        Events
+      </b-navbar-item>
+      <b-navbar-item tag="router-link" :to="{ path: '/documentation' }" exact-active-class="is-active">
+        Documentation
+      </b-navbar-item>
+      <b-navbar-dropdown label="Info">
+        <b-navbar-item tag="router-link" :to="{ path: '/about' }" exact-active-class="is-active">
+          About
+        </b-navbar-item>
+        <b-navbar-item tag="router-link" :to="{ path: '/contact' }" exact-active-class="is-active">
+          Contact
+        </b-navbar-item>
+      </b-navbar-dropdown>
+    </template>
+
+    <template #end>
+      <b-navbar-item tag="div">
+        <div class="buttons">
+          <a class="button is-primary" v-if="authState !== 'signedin'">
+            <strong>Sign up</strong>
+          </a>
+          <a class="button is-primary">
+            <i class="el-icon-user-solid" style="color: white;"></i>
+          </a>
+          <a class="button is-light" v-if="authState !== 'signedin'">
+            Log in
+          </a>
+          <a class="button is-light" @click="handleSelect(5)">
+            Log out
+          </a>
+        </div>
+      </b-navbar-item>
+    </template>
+  </b-navbar>
+
+
+
     <router-view/>
-      <amplify-sign-out></amplify-sign-out>
+      <!-- <amplify-sign-out></amplify-sign-out> -->
     </div>
   </amplify-authenticator>
 
@@ -53,25 +146,20 @@ export default {
       email: '',
       accessToken: '',
       username: '',
+      activeIndex: '1',
+      activeIndex2: '1'
     }
   },
   methods: {
-    // go_back() {
-    //   this.sso_state = false
-    // },
-    // sso_auth() {
-    //   this.sso_state = true
-    // },
-    // sso_auth_client() {
-    //   this.$refs.sso_validate.validate().then(success => {
-    //     if (!success) {
-    //       return
-    //     }
-    //     Auth.federatedSignIn({
-    //       provider: this.client_sso_id
-    //     })
-    //   })
-    // }
+    handleSelect(key, keyPath) {
+        console.log("this" + key, keyPath);
+        if(key == 5){
+          this.$router.push('/logout').catch(() => {})
+        }
+        else if(key == 1){
+          this.$router.push('/Events').catch(() => {})
+        }
+      }
   },
   created() {
     // this.currentYear = new Date().getFullYear()
@@ -90,6 +178,7 @@ export default {
         console.log(this.email)
         console.log(this.accessToken)
         console.log(this.username)
+        this.$router.push('/Events').catch(() => {})
         
         // if (!('custom:OrgID' in authData.attributes)) {
         //   window.location.href = 'https://psitrontech.com/contactAdmin'
