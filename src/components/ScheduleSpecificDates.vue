@@ -127,10 +127,15 @@
       },
   
       handleTimeChange(value, index) {
-        console.log('Time changed:', value, 'at index:', index)
-        this.scheduleDates[index].timeObj = value
-        this.updateSchedule()
-      },
+            console.log('Time changed:', value, 'at index:', index)
+            console.log('Before update - scheduleDates:', JSON.stringify(this.scheduleDates))
+            
+            // Update the timeObj
+            this.scheduleDates[index].timeObj = value
+            
+            console.log('After update - scheduleDates:', JSON.stringify(this.scheduleDates))
+            this.updateSchedule()
+        },
   
       handleTimezoneChange(value) {
         console.log('Timezone changed:', value)
@@ -189,39 +194,53 @@
       },
   
       updateSchedule() {
-        console.log('Updating schedule with dates:', this.scheduleDates)
-        
-        const completeDates = this.scheduleDates
-            .filter(dt => dt.dateObj && dt.timeObj) // This filters out incomplete entries
+            console.log('Starting updateSchedule with scheduleDates:', JSON.stringify(this.scheduleDates))
+            
+            // Filter out incomplete entries
+            const completeDates = this.scheduleDates
+            .filter(dt => {
+                const hasDate = !!dt.dateObj
+                const hasTime = !!dt.timeObj
+                console.log('Entry validation:', { hasDate, hasTime, entry: dt })
+                return hasDate && hasTime
+            })
             .map(dt => {
-            const time = moment(dt.timeObj)
-            const combinedDateTime = moment(dt.dateObj)
+                const time = moment(dt.timeObj)
+                console.log('Processing time:', time.format('HH:mm'))
+                
+                // Combine date and time
+                const combinedDateTime = moment(dt.dateObj)
                 .hour(time.hour())
                 .minute(time.minute())
                 .tz(this.timezone)
-
-            return {
+                
+                const formatted = {
                 date: combinedDateTime.format('YYYY-MM-DD'),
                 time: combinedDateTime.format('HH:mm')
-            }
+                }
+                console.log('Formatted datetime:', formatted)
+                return formatted
             })
             .sort((a, b) => {
-            return moment(`${a.date} ${a.time}`).diff(moment(`${b.date} ${b.time}`))
+                return moment(`${a.date} ${a.time}`).diff(moment(`${b.date} ${b.time}`))
             })
 
-        console.log('Processed dates:', completeDates)
+            console.log('Processed completeDates:', completeDates)
 
-        const payload = {
+            // Create the payload with the correct structure
+            const payload = {
             schedule: {
-            dates: completeDates
-            },
-            timezone: this.timezone,
-            type: 'specific'
-        }
+                schedule: {  // Note the nested schedule structure
+                dates: completeDates
+                },
+                timezone: this.timezone,
+                type: 'specific'
+            }
+            }
 
-        console.log('Emitting payload:', payload)
-        this.$emit('input', payload)
-        }
+            console.log('Emitting payload:', JSON.stringify(payload))
+            this.$emit('input', payload)
+        },
 
     },
     watch: {
