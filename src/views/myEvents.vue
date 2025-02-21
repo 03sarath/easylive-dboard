@@ -1,5 +1,15 @@
 <template>
   <section class="events-container">
+      <!-- Add Create Event button -->
+      <div class="create-event-container">
+      <b-button
+        type="is-primary"
+        icon-left="plus"
+        @click="openCreateModal">
+        Create Event
+      </b-button>
+    </div>
+
     <b-table
       :data="displayedData"
       :paginated="true"
@@ -121,15 +131,24 @@
       :active-row="active_row"
       @save="handleSave"
     />
+
+       <!-- Add create modal -->
+       <create-event-modal
+      v-model="isCreateModalActive"
+      @save="handleCreate"
+    />
   </section>
 </template>
 
 <script>
 import EditEventModal from '@/components/EditEventModal.vue'
+import CreateEventModal from '@/components/CreateEventModal.vue'
+
 
 export default {
   components: {
-    EditEventModal
+    EditEventModal,
+    CreateEventModal
   },
   name: 'MyEvents',
   data() {
@@ -150,7 +169,8 @@ export default {
       sortIconSize: 'is-small',
       sortField: 'event_name',
       sortOrder: 'asc',
-      defaultSortOrder: 'asc'
+      defaultSortOrder: 'asc',
+      isCreateModalActive: false,
     }
   },
 
@@ -169,6 +189,36 @@ export default {
   },
 
   methods: {
+    openCreateModal() {
+      this.isCreateModalActive = true
+    },
+    async handleCreate(eventData) {
+      try {
+        const data = {
+          ...eventData,
+          "mode": "create_event"
+        }
+
+        const result = await this.$post_AWS_API(data)
+        console.log('Create event result:', result)
+
+        this.$buefy.toast.open({
+          message: 'Event created successfully',
+          type: 'is-success',
+          duration: 3000
+        })
+
+      } catch (error) {
+        console.error('Error creating event:', error)
+        this.$buefy.toast.open({
+          message: 'Error creating event. Please try again.',
+          type: 'is-danger',
+          duration: 3000
+        })
+      } finally {
+        this.isCreateModalActive = false
+      }
+    },
     // Add sorting methods
     onSort(field, order) {
       this.sortField = field
@@ -341,6 +391,13 @@ export default {
 </script>
 
 <style scoped>
+/* Add to your existing styles */
+.create-event-container {
+  margin-bottom: 1rem;
+  display: flex;
+  justify-content: flex-end;
+}
+
 .events-container {
   padding: 1rem;
   max-width: 1200px;
