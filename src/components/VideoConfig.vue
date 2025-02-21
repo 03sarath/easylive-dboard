@@ -211,143 +211,153 @@
         }
       }
     },
-  
     computed: {
-      videoId() {
-        if (!this.videoUrl) return null
-        const match = this.videoUrl.match(/(?:vimeo.com\/|video\/)(\d+)/)
-        return match ? match[1] : null
-      },
-  
-      hasValidationErrors() {
-        return Object.values(this.errors).some(error => error !== null)
-      },
-  
-      activeErrors() {
-        return Object.entries(this.errors)
-          .filter(([, error]) => error !== null)
-          .map(([key, error]) => ({
-            key,
-            message: error
-          }))
-      },
-  
-      isValidConfiguration() {
-        const hasValidOptions = Object.values(this.navConfig)
-          .some(opt => opt.value !== '' && opt.time > 0)
+    videoId() {
+      if (!this.videoUrl) return null;
+      const match = this.videoUrl.match(/(?:vimeo.com\/|video\/)(\d+)/);
+      return match ? match[1] : null;
+    },
+
+    hasValidationErrors() {
+      return Object.values(this.errors).some(error => error !== null);
+    },
+
+    activeErrors() {
+      return Object.entries(this.errors)
+        .filter(([, error]) => error !== null)
+        .map(([key, error]) => ({
+          key,
+          message: error
+        }));
+    },
+
+    isValidConfiguration() {
+      const hasValidOptions = Object.values(this.navConfig)
+        .some(opt => opt.value !== '' && opt.time > 0);
+      
+      const allTimesValid = Object.values(this.navConfig)
+        .every(opt => !opt.value || (opt.value && opt.time > 0));
+      
+      return !this.hasValidationErrors && hasValidOptions && allTimesValid;
+    }
+  },
+
+  methods: {
+    async initializeConfig() {
+      try {
+        console.log('Initializing with value:', this.value);
+
+        // Wait for video duration to be available
+        if (this.player && !this.videoDuration) {
+          try {
+            this.videoDuration = await this.player.getDuration();
+          } catch (e) {
+            console.warn('Error getting video duration:', e);
+          }
+        }
+
+        // Initialize with default empty config
+        const defaultConfig = {
+          first: { value: '', time: 0 },
+          second: { value: '', time: 0 },
+          third: { value: '', time: 0 },
+          fourth: { value: '', time: 0 }
+        };
+
+        let incomingConfig = null;
+
+        // Handle different input formats
+        if (this.value) {
+          if (typeof this.value === 'string') {
+            try {
+              incomingConfig = JSON.parse(this.value);
+            } catch (e) {
+              console.warn('Error parsing nav_panel string:', e);
+            }
+          } else if (typeof this.value === 'object') {
+            incomingConfig = this.value;
+          }
+        }
+
+        // Handle nav_panle typo in payload
+        if (this.value && this.value.nav_panle) {
+          incomingConfig = this.value.nav_panle;
+          console.log('Using nav_panle config:', incomingConfig);
+        }
+
+        if (incomingConfig) {
+          // Map the incoming values to our config structure
+          Object.keys(defaultConfig).forEach(key => {
+            const incomingKey = key === 'fourth' ? 'four' : key;
+            if (incomingConfig[incomingKey]) {
+              const timeValue = incomingConfig[incomingKey].time;
+              defaultConfig[key] = {
+                value: this.normalizeOptionValue(incomingConfig[incomingKey].value),
+                time: timeValue === '' || timeValue === null ? 0 : parseInt(timeValue) || 0
+              };
+            }
+          });
+        }
+
+        console.log('Setting navConfig with:', defaultConfig);
+        this.navConfig = { ...defaultConfig };
         
-        const allTimesValid = Object.values(this.navConfig)
-          .every(opt => !opt.value || (opt.value && opt.time > 0))
-        
-        return !this.hasValidationErrors && hasValidOptions && allTimesValid
+        // Force a reactive update
+        this.$nextTick(() => {
+          this.navConfig = { ...this.navConfig };
+          this.validateConfig();
+        });
+      } catch (error) {
+        console.error('Error in initializeConfig:', error);
       }
     },
-  
-    methods: {
-      initializeConfig() {
+
+    normalizeOptionValue(value) {
+      if (!value) return '';
+      return this.valueMap[value] || value;
+    },
+
+    async initializePlayer() {
+      if (this.videoId && this.$refs.vimeoIframe) {
+        this.isLoading = true;
+        this.player = new Player(this.$refs.vimeoIframe);
+
         try {
-          console.log('Initializing with value:', this.value);
-  
-          // Initialize with default empty config
-          const defaultConfig = {
-            first: { value: '', time: 0 },
-            second: { value: '', time: 0 },
-            third: { value: '', time: 0 },
-            fourth: { value: '', time: 0 }
-          }
-  
-          let incomingConfig = null;
-  
-          // Handle different input formats
-          if (this.value) {
-            if (typeof this.value === 'string') {
-              try {
-                incomingConfig = JSON.parse(this.value);
-              } catch (e) {
-                console.warn('Error parsing nav_panel string:', e);
-              }
-            } else if (typeof this.value === 'object') {
-              incomingConfig = this.value;
-            }
-          }
-  
-          // Handle nav_panle typo in payload
-          if (!incomingConfig && this.value && this.value.nav_panle) {
-            incomingConfig = this.value.nav_panle;
-          }
-  
-          if (incomingConfig) {
-            // Map the incoming values to our config structure
-            Object.keys(defaultConfig).forEach(key => {
-              const incomingKey = key === 'fourth' ? 'four' : key;
-              if (incomingConfig[incomingKey]) {
-                defaultConfig[key] = {
-                  value: this.normalizeOptionValue(incomingConfig[incomingKey].value),
-                  time: parseInt(incomingConfig[incomingKey].time) || 0
-                };
-              }
-            });
-          }
-  
-          this.navConfig = defaultConfig;
-          this.validateConfig();
-          
-          console.log('Initialized config:', this.navConfig);
+          const duration = await this.player.getDuration();
+          this.videoDuration = duration;
+          this.$emit('duration-update', duration);
+          await this.initializeConfig(); // Initialize config after getting duration
+          this.isLoading = false;
         } catch (error) {
-          console.error('Error in initializeConfig:', error);
+          console.error('Error getting video duration:', error);
+          this.isLoading = false;
           this.$buefy.toast.open({
-            message: 'Error initializing configuration',
+            message: 'Error loading video',
             type: 'is-danger'
           });
         }
-      },
-  
-      normalizeOptionValue(value) {
-        if (!value) return '';
-        return this.valueMap[value] || value;
-      },
-  
-      initializePlayer() {
-        if (this.videoId && this.$refs.vimeoIframe) {
-          this.isLoading = true;
-          this.player = new Player(this.$refs.vimeoIframe);
-  
-          this.player.getDuration().then(duration => {
-            this.videoDuration = duration;
-            this.$emit('duration-update', duration);
-            this.isLoading = false;
-          }).catch(error => {
-            console.error('Error getting video duration:', error);
-            this.isLoading = false;
-            this.$buefy.toast.open({
-              message: 'Error loading video',
-              type: 'is-danger'
-            });
+
+        this.player.on('timeupdate', ({ seconds }) => {
+          if (!this.isSeekingFromCustomBar) {
+            this.currentTime = seconds;
+          }
+        });
+
+        this.player.on('loaded', () => {
+          this.isLoading = false;
+        });
+
+        this.player.on('error', () => {
+          this.isLoading = false;
+          this.$buefy.toast.open({
+            message: 'Error playing video',
+            type: 'is-danger'
           });
-  
-          this.player.on('timeupdate', ({ seconds }) => {
-            if (!this.isSeekingFromCustomBar) {
-              this.currentTime = seconds;
-            }
-          });
-  
-          this.player.on('loaded', () => {
-            this.isLoading = false;
-          });
-  
-          this.player.on('error', () => {
-            this.isLoading = false;
-            this.$buefy.toast.open({
-              message: 'Error playing video',
-              type: 'is-danger'
-            });
-          });
-        }
-      },
-  
-      // ... (continued in next part)
-      // Video Control Methods
-      playVideo() {
+        });
+      }
+    },
+
+    playVideo() {
       if (this.player) this.player.play();
     },
 
@@ -384,7 +394,6 @@
         });
     },
 
-    // Time Formatting and Utility Methods
     formatTime(seconds) {
       if (!seconds) return '0:00';
       const mins = Math.floor(seconds / 60);
@@ -396,7 +405,6 @@
       return str.charAt(0).toUpperCase() + str.slice(1);
     },
 
-    // Navigation Panel Methods
     availableOptions(currentKey) {
       const usedValues = Object.entries(this.navConfig)
         .filter(([key]) => key !== currentKey)
@@ -407,6 +415,7 @@
     },
 
     validateConfig() {
+      console.log('Validating config:', this.navConfig);
       const order = ['first', 'second', 'third', 'fourth'];
       let lastTime = 0;
       let hasError = false;
@@ -425,28 +434,32 @@
         if (option.value) {
           selectedOptions++;
           
-          if (option.time <= 0) {
+          if (option.time === null || option.time === '') {
+            option.time = 0;
+          }
+
+          if (parseInt(option.time) <= 0) {
             this.errors[key] = 'Time must be provided for selected option';
             hasError = true;
-          } else if (option.time <= lastTime) {
+          } else if (parseInt(option.time) <= lastTime) {
             this.errors[key] = `Time must be greater than ${this.formatTime(lastTime)}`;
             hasError = true;
-          } else if (option.time > this.videoDuration) {
+          } else if (this.videoDuration && parseInt(option.time) > this.videoDuration) {
             this.errors[key] = `Time cannot exceed video duration (${this.formatTime(this.videoDuration)})`;
             option.time = this.videoDuration;
             hasError = true;
           }
 
-          if (option.time > 0) {
+          if (parseInt(option.time) > 0) {
             filledTimes++;
           }
           
-          lastTime = option.time;
+          lastTime = parseInt(option.time);
         }
       });
 
-      // Validate that all selected options have times
       if (selectedOptions > 0 && selectedOptions !== filledTimes) {
+        console.log('Validation failed:', { selectedOptions, filledTimes });
         this.$buefy.toast.open({
           message: 'All selected options must have a time value',
           type: 'is-danger',
@@ -455,6 +468,7 @@
         hasError = true;
       }
 
+      console.log('Validation result:', { hasError, selectedOptions, filledTimes });
       return !hasError;
     },
 
@@ -534,36 +548,33 @@
     }
   },
 
-  // Lifecycle Hooks
-  mounted() {
-    this.initializeConfig();
-    this.initializePlayer();
-  },
-
-  beforeDestroy() {
-    if (this.player) {
-      this.player.destroy();
+  watch: {
+    value: {
+      immediate: true,
+      handler(newVal) {
+        console.log('Value changed:', newVal);
+        if (newVal && Object.keys(newVal).length > 0) {
+          this.initializeConfig();
+        }
+      }
+    },
+    videoUrl: {
+      immediate: true,
+      handler(newVal) {
+        console.log('Video URL changed:', newVal);
+        if (newVal) {
+          this.$nextTick(async () => {
+            await this.initializePlayer();
+          });
+        }
+      }
     }
   },
 
-  // Watchers
-  watch: {
-    value: {
-      handler(newVal) {
-        console.log('Value changed:', newVal);
-        this.initializeConfig();
-      },
-      deep: true
-    },
-
-    videoUrl: {
-      handler(newVal) {
-        console.log('Video URL changed:', newVal);
-        this.$nextTick(() => {
-          this.initializePlayer();
-        });
-      },
-      immediate: true
+  async mounted() {
+    console.log('Component mounted');
+    if (this.videoUrl) {
+      await this.initializePlayer();
     }
   }
 }
