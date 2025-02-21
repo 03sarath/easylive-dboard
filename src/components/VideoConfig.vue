@@ -127,7 +127,7 @@
         </div>
   
         <!-- Save Button -->
-        <div class="field mt-4">
+        <!-- <div class="field mt-4">
           <b-button
             type="is-primary"
             :disabled="!isValidConfiguration"
@@ -136,7 +136,7 @@
           >
             Save Changes
           </b-button>
-        </div>
+        </div> -->
   
         <!-- Validation Summary -->
         <div v-if="hasValidationErrors" class="validation-summary mt-4">

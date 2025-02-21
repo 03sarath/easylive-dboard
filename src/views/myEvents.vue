@@ -7,33 +7,60 @@
       :current-page.sync="currentPage"
       :pagination-position="'bottom'"
       :loading="isLoading"
-      
       :selected.sync="selected"
       selected-row-class="is-selected"
       focusable
       @select="handleSelect"
+      :sort-icon="sortIcon"
+      :sort-icon-size="sortIconSize"
+      :default-sort="[sortField, sortOrder]"
+      :default-sort-direction="defaultSortOrder"
+      @sort="onSort"
       aria-next-label="Next page"
       aria-previous-label="Previous page"
       aria-page-label="Page"
       aria-current-label="Current page">
 
-      <b-table-column field="event_name" label="Event Name" v-slot="props">
+      <b-table-column 
+        field="event_name" 
+        label="Event Name" 
+        v-slot="props"
+        sortable>
         {{ props.row.event_name }}
       </b-table-column>
 
-      <b-table-column field="event_id" label="Event ID" v-slot="props">
+      <b-table-column 
+        field="event_id" 
+        label="Event ID" 
+        v-slot="props"
+        sortable>
         {{ props.row.event_id }}
       </b-table-column>
 
-      <b-table-column field="webinar_duration" label="Duration" centered v-slot="props">
+      <!-- <b-table-column 
+        field="webinar_duration" 
+        label="Duration" 
+        centered 
+        v-slot="props"
+        sortable
+        :custom-sort="sortDuration">
         {{ formatDuration(props.row.webinar_duration) }}
-      </b-table-column>
+      </b-table-column> -->
 
-      <b-table-column field="schedule.type" label="Schedule Type" centered v-slot="props">
+      <b-table-column 
+        field="schedule.type" 
+        label="Schedule Type" 
+        centered 
+        v-slot="props"
+        sortable>
         {{ formatScheduleType(props.row.schedule?.type) }}
       </b-table-column>
 
-      <b-table-column field="event_details" label="Event Details" centered v-slot="props">
+      <b-table-column 
+        field="event_details" 
+        label="Event Details" 
+        centered 
+        v-slot="props">
         <b-button 
           size="is-small"
           type="is-info"
@@ -118,6 +145,12 @@ export default {
       isModalActive: false,
       active_row: null,
       isEditModalActive: false,
+      // Add sorting related data
+      sortIcon: 'arrow-up',
+      sortIconSize: 'is-small',
+      sortField: 'event_name',
+      sortOrder: 'asc',
+      defaultSortOrder: 'asc'
     }
   },
 
@@ -136,6 +169,19 @@ export default {
   },
 
   methods: {
+    // Add sorting methods
+    onSort(field, order) {
+      this.sortField = field
+      this.sortOrder = order
+    },
+
+    sortDuration(a, b, isAsc) {
+      const durationA = a.webinar_duration || 0
+      const durationB = b.webinar_duration || 0
+      return isAsc ? durationA - durationB : durationB - durationA
+    },
+
+    // Existing methods
     formatDuration(duration) {
       if (!duration) return '00:00:00';
       const hours = Math.floor(duration / 3600);
@@ -165,12 +211,37 @@ export default {
 
     async handleSave(updatedData) {
       try {
-        console.log('Saving event:', updatedData)
-        // Implement your save logic here
+        // Add mode to the updatedData
+        const data = {
+          ...updatedData,
+          "mode": "update_event"
+        }
+
+        // Make API call
+        const result = await this.$post_AWS_API(data)
+        console.log('Update event result:', result)
+
+        // Show success message using Buefy toast
+        this.$buefy.toast.open({
+          message: 'Event updated successfully',
+          type: 'is-success',
+          duration: 3000
+        })
+
       } catch (error) {
-        console.error('Error saving event:', error)
+        console.error('Error updating event:', error)
+        // Show error message using Buefy toast
+        this.$buefy.toast.open({
+          message: 'Error updating event. Please try again.',
+          type: 'is-danger',
+          duration: 3000
+        })
+      } finally {
+        // Close the modal after save attempt (successful or not)
+        this.isEditModalActive = false
       }
     },
+
 
     async getCustomer_id() {
       try {
@@ -281,6 +352,19 @@ export default {
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
   border-radius: 6px;
   overflow-x: auto;
+}
+
+/* Sorting styles */
+::v-deep .table th.is-sortable {
+  cursor: pointer;
+}
+
+::v-deep .table th.is-sortable:hover {
+  background-color: #f5f5f5;
+}
+
+::v-deep .table th.is-sortable .icon {
+  margin-left: 0.5rem;
 }
 
 /* Pagination button alignment */
