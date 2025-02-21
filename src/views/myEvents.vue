@@ -189,6 +189,10 @@ export default {
   },
 
   methods: {
+    handleCreateEvent(payload) {
+      // Handle the create event payload
+      console.log('Create event payload:', payload)
+    },
     openCreateModal() {
       this.isCreateModalActive = true
     },

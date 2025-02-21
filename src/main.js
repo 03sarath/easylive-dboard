@@ -17,6 +17,8 @@ import '@fortawesome/fontawesome-free/css/all.css';
 import '@fortawesome/fontawesome-free/js/all.js';
 
 import '@mdi/font/css/materialdesignicons.css'
+import VeeValidate from 'vee-validate'
+
 
 
 
@@ -35,6 +37,7 @@ Vue.config.ignoredElements = [/amplify-\w*/];
 
 Vue.config.productionTip = false
 Vue.use(ElementUI);
+Vue.use(VeeValidate)
 Vue.use(Buefy, {
   defaultIconPack: 'mdi'
 })
