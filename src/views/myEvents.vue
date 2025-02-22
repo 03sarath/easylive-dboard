@@ -200,6 +200,7 @@ export default {
       try {
         const data = {
           ...eventData,
+          "customer_id": this.customer_id,
           "mode": "create_event"
         }
 
