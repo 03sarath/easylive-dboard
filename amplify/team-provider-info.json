@@ -10,6 +10,17 @@
       "StackName": "amplify-easylivedboard-dev-78b85",
       "StackId": "arn:aws:cloudformation:ap-south-1:923307152276:stack/amplify-easylivedboard-dev-78b85/17b6ee30-0b02-11f0-8115-02bf696762eb",
       "AmplifyAppId": "dm4f2ipjjnll4"
+    },
+    "categories": {
+      "hosting": {
+        "amplifyhosting": {
+          "appId": "dm4f2ipjjnll4",
+          "type": "cicd"
+        }
+      },
+      "auth": {
+        "easylivedboard173ebd80173ebd80": {}
+      }
     }
   }
 }
