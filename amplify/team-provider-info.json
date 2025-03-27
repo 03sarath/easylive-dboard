@@ -1,20 +1,15 @@
 {
   "dev": {
     "awscloudformation": {
-      "AuthRoleName": "amplify-easylivedboard-dev-5841a-authRole",
-      "UnauthRoleArn": "arn:aws:iam::923307152276:role/amplify-easylivedboard-dev-5841a-unauthRole",
-      "AuthRoleArn": "arn:aws:iam::923307152276:role/amplify-easylivedboard-dev-5841a-authRole",
+      "AuthRoleName": "amplify-easylivedboard-dev-78b85-authRole",
+      "UnauthRoleArn": "arn:aws:iam::923307152276:role/amplify-easylivedboard-dev-78b85-unauthRole",
+      "AuthRoleArn": "arn:aws:iam::923307152276:role/amplify-easylivedboard-dev-78b85-authRole",
       "Region": "ap-south-1",
-      "DeploymentBucketName": "amplify-easylivedboard-dev-5841a-deployment",
-      "UnauthRoleName": "amplify-easylivedboard-dev-5841a-unauthRole",
-      "StackName": "amplify-easylivedboard-dev-5841a",
-      "StackId": "arn:aws:cloudformation:ap-south-1:923307152276:stack/amplify-easylivedboard-dev-5841a/90721dd0-eed4-11ef-978d-0269b14404b9",
-      "AmplifyAppId": "d1crpiejcr8606"
-    },
-    "categories": {
-      "auth": {
-        "easylivedboarde8a77f85e8a77f85": {}
-      }
+      "DeploymentBucketName": "amplify-easylivedboard-dev-78b85-deployment",
+      "UnauthRoleName": "amplify-easylivedboard-dev-78b85-unauthRole",
+      "StackName": "amplify-easylivedboard-dev-78b85",
+      "StackId": "arn:aws:cloudformation:ap-south-1:923307152276:stack/amplify-easylivedboard-dev-78b85/17b6ee30-0b02-11f0-8115-02bf696762eb",
+      "AmplifyAppId": "dm4f2ipjjnll4"
     }
   }
 }
