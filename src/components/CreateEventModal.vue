@@ -23,8 +23,14 @@
         <div class="card-content">
           <b-tabs v-model="activeTab" type="is-boxed">
             <!-- General Information Tab -->
-            <b-tab-item label="General Information">
-              <div class="general-info-form">
+            <b-tab-item>
+            <template #header>
+                <span class="tab-label">
+                <i class="fas fa-info-circle"></i>
+                <span class="ml-2">General Information</span>
+                </span>
+            </template>
+                    <div class="general-info-form">
                 <b-field label="Event Name *" 
                   :type="{ 'is-danger': errors.has('event_name') }"
                   :message="errors.first('event_name')">
@@ -125,7 +131,13 @@
             </b-tab-item>
   
             <!-- Schedule Configuration Tab -->
-            <b-tab-item label="Schedule Configuration">
+            <b-tab-item>
+            <template #header>
+                <span class="tab-label">
+                <i class="fas fa-calendar-alt"></i>
+                <span class="ml-2">Schedule Configuration</span>
+                </span>
+            </template>
               <div class="schedule-config">
                 <b-field label="Schedule Type">
                   <b-select v-model="selectedScheduleType" expanded>
@@ -144,7 +156,13 @@
             </b-tab-item>
   
             <!-- Video Configuration Tab -->
-            <b-tab-item label="Video Configuration">
+            <b-tab-item>
+            <template #header>
+                <span class="tab-label">
+                <i class="fas fa-video"></i>
+                <span class="ml-2">Video Configuration</span>
+                </span>
+            </template>
               <div class="video-config">
                 <b-field label="Video URL *"
                   :type="{ 'is-danger': errors.has('video_url') }"
@@ -1073,6 +1091,98 @@
       }
     }
   }
+
+  // Tab styling with icons
+::v-deep .b-tabs {
+  .tabs {
+    ul {
+      li {
+        a {
+          .tab-label {
+            display: flex;
+            align-items: center;
+            color: #4a4a4a;
+            
+            i {
+              font-size: 1.1rem;
+              margin-right: 0.5rem;
+            }
+            
+            &:hover {
+              color: #3273dc;
+            }
+          }
+        }
+        
+        &.is-active {
+          a {
+            .tab-label {
+              color: #3273dc;
+              
+              i {
+                color: #3273dc;
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}
+
+// Enhanced tab transitions
+::v-deep .b-tabs {
+  .tab-content {
+    .tab-item {
+      transition: all 0.3s ease;
+      
+      &.is-active {
+        animation: fadeIn 0.3s ease-in-out;
+      }
+    }
+  }
+}
+
+// Animation for tab content
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+// Additional styling for active tabs
+::v-deep .tabs {
+  li {
+    &.is-active {
+      a {
+        background-color: white;
+        border-color: #dbdbdb;
+        border-bottom-color: transparent !important;
+        
+        .tab-label {
+          font-weight: 600;
+        }
+      }
+    }
+    
+    a {
+      &:hover {
+        .tab-label {
+          i {
+            transform: scale(1.1);
+            transition: transform 0.2s ease;
+          }
+        }
+      }
+    }
+  }
+}
+
   </style>
   
   
